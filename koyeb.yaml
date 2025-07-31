@@ -1,0 +1,35 @@
+name: cookware-analyzer
+services:
+  - name: web
+    type: web
+    git:
+      branch: main
+      build_command: "pip install -r requirements.txt"
+      run_command: "gunicorn --config gunicorn.conf.py app:app"
+    instance_type: small  # Upgraded from nano for better TensorFlow performance
+    ports:
+      - port: 8080
+        protocol: http
+    env:
+      - key: PORT
+        value: "8080"
+      - key: FLASK_ENV
+        value: "production"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "2"  # Reduce TensorFlow logging
+    health_check:
+      http:
+        path: /api/health
+        port: 8080
+        initial_delay_seconds: 60  # Allow time for model loading
+        timeout_seconds: 10
+        period_seconds: 30
+    regions:
+      - fra
+    autoscaling:
+      min: 1
+      max: 3
+    disk:
+      size: 5  # GB - needed for TensorFlow and models
