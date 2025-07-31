@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookware Damage Analyzer | AI-Powered Kitchen Safety</title>
+    <meta name="description" content="Upload cookware images to get instant AI-powered damage analysis and safety recommendations">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍳</text></svg>">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="/styles.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Meta tags for social sharing -->
+    <meta property="og:title" content="Cookware Damage Analyzer">
+    <meta property="og:description" content="AI-powered cookware safety analysis">
+    <meta property="og:type" content="website">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">🍳</span>
+                    <h1>Cookware Damage Analyzer</h1>
+                </div>
+                <div class="header-info">
+                    <span class="user-info">👤 basil03p</span>
+                    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle dark mode">🌙</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            
+            <!-- Hero Section -->
+            <section class="hero">
+                <h2>AI-Powered Cookware Safety Analysis</h2>
+                <p>Upload images of your cookware to get instant damage assessment and safety recommendations</p>
+            </section>
+
+            <!-- Upload Section -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-card">
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-content">
+                            <div class="upload-icon">📸</div>
+                            <h3>Drop your cookware image here</h3>
+                            <p>or <span class="browse-text">browse files</span></p>
+                            <p class="file-info">Supports JPG, PNG, JPEG • Max 10MB</p>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/*" hidden>
+                    </div>
+                    
+                    <!-- Image Preview -->
+                    <div class="image-preview" id="imagePreview" style="display: none;">
+                        <img id="previewImg" alt="Uploaded cookware image">
+                        <div class="preview-actions">
+                            <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeImage()">
+                                🔍 Analyze Cookware
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetUpload()">
+                                🗑️ Remove Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Loading Section -->
+            <section class="loading-section" id="loadingSection" style="display: none;">
+                <div class="loading-card">
+                    <div class="loading-spinner"></div>
+                    <h3>Analyzing your cookware...</h3>
+                    <p id="loadingText">Processing image with AI...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-header">
+                    <h2>🔍 Analysis Results</h2>
+                    <div class="results-actions">
+                        <button class="btn btn-outline" onclick="downloadResults()">📄 Download Report</button>
+                        <button class="btn btn-outline" onclick="shareResults()">📤 Share</button>
+                    </div>
+                </div>
+
+                <!-- Status Card -->
+                <div class="status-card" id="statusCard">
+                    <div class="status-icon" id="statusIcon">🟢</div>
+                    <div class="status-content">
+                        <h3 id="statusTitle">Excellent Condition</h3>
+                        <p id="statusDescription">No visible wear detected</p>
+                        <div class="confidence-badge" id="confidenceBadge">95% Confidence</div>
+                    </div>
+                    <div class="condition-score">
+                        <div class="score-circle" id="scoreCircle">
+                            <span id="scoreValue">100</span>
+                            <small>/100</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analysis Details -->
+                <div class="analysis-grid">
+                    <!-- Probability Chart -->
+                    <div class="analysis-card">
+                        <h4>📊 Damage Probability</h4>
+                        <canvas id="probabilityChart"></canvas>
+                    </div>
+
+                    <!-- Safety Assessment -->
+                    <div class="analysis-card">
+                        <h4>🛡️ Safety Assessment</h4>
+                        <div class="safety-info">
+                            <div class="safety-item">
+                                <span class="safety-label">Safety Level:</span>
+                                <span class="safety-value" id="safetyLevel">Completely Safe</span>
+                            </div>
+                            <div class="safety-item">
+                                <span class="safety-label">Urgency:</span>
+                                <span class="safety-value" id="urgencyLevel">None</span>
+                            </div>
+                            <div class="safety-item">
+                                <span class="safety-label">Replacement:</span>
+                                <span class="safety-value" id="replacementTimeline">No replacement needed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div class="analysis-card full-width">
+                        <h4>💡 Recommendations</h4>
+                        <div class="recommendations">
+                            <div class="recommendation-item">
+                                <h5>🎯 Recommended Action</h5>
+                                <p id="recommendedAction">Continue normal use - no action needed</p>
+                            </div>
+                            <div class="recommendation-item">
+                                <h5>🔧 Care Tips</h5>
+                                <p id="careTips">Continue current care routine to maintain condition</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyze Another Button -->
+                <div class="analyze-another">
+                    <button class="btn btn-primary" onclick="analyzeAnother()">
+                        📷 Analyze Another Image
+                    </button>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Cookware Damage Analyzer by basil03p • AI-Powered Kitchen Safety</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/script.js"></script>
+</body>
+</html>
