@@ -20,7 +20,35 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTheme();
     initializeModelSelection();
     console.log('🚀 Cookware Damage Analyzer initialized');
+    console.log(`🤖 Default model: ${selectedModel}`);
+    
+    // Test model selection consistency
+    testModelConsistency();
 });
+
+// Test Model Consistency
+function testModelConsistency() {
+    console.log('🧪 Testing model consistency...');
+    
+    // Simulate a test file for consistent results
+    const testFile = { name: 'test-cookware.jpg', size: 1024 };
+    const originalFile = currentFile;
+    currentFile = testFile;
+    
+    // Test each model
+    const models = ['optimized', 'original', 'proven'];
+    models.forEach(model => {
+        const originalModel = selectedModel;
+        selectedModel = model;
+        const result = generateMockResult();
+        console.log(`📊 ${model} model: ${result.predicted_class} (${result.confidence_percent})`);
+        selectedModel = originalModel;
+    });
+    
+    // Restore original file
+    currentFile = originalFile;
+    console.log('✅ Model consistency test completed');
+}
 
 // Model Selection Functions
 function initializeModelSelection() {
@@ -207,6 +235,9 @@ async function analyzeImage() {
         return;
     }
     
+    console.log(`🔍 Analyzing with ${selectedModel} model (${getModelInfo(selectedModel).accuracy} accuracy)`);
+    console.log(`📁 File: ${currentFile.name} (${formatFileSize(currentFile.size)})`);
+    
     // Show loading
     showLoading();
     
@@ -340,21 +371,53 @@ function generateMockResult() {
         }
     ];
     
-    // Adjust selection probability based on model accuracy
+    // More realistic model behavior based on selected model
     const accuracyFactor = parseFloat(modelInfo.accuracy) / 100;
     let selectedCondition;
     
-    if (accuracyFactor > 0.65) {
-        // High accuracy models tend to detect good condition more often
-        selectedCondition = conditions[Math.floor(Math.random() * 2)]; // New or minor
-    } else {
-        // Lower accuracy models have more varied results
-        selectedCondition = conditions[Math.floor(Math.random() * conditions.length)];
+    // Create a deterministic but varied selection based on image characteristics
+    // Use file name or timestamp as seed for consistent results during testing
+    const imageSeed = currentFile ? currentFile.name.length + currentFile.size : Date.now();
+    const pseudoRandom = (imageSeed * 9301 + 49297) % 233280 / 233280;
+    
+    if (selectedModel === 'optimized') {
+        // Optimized model (71.02%) - Better at detecting good condition
+        if (pseudoRandom < 0.4) {
+            selectedCondition = conditions[0]; // New condition
+        } else if (pseudoRandom < 0.7) {
+            selectedCondition = conditions[1]; // Minor wear
+        } else if (pseudoRandom < 0.9) {
+            selectedCondition = conditions[2]; // Moderate
+        } else {
+            selectedCondition = conditions[3]; // Severe
+        }
+    } else if (selectedModel === 'original') {
+        // Original model (44.89%) - More random but functional
+        if (pseudoRandom < 0.25) {
+            selectedCondition = conditions[0]; // New
+        } else if (pseudoRandom < 0.5) {
+            selectedCondition = conditions[1]; // Minor
+        } else if (pseudoRandom < 0.75) {
+            selectedCondition = conditions[2]; // Moderate
+        } else {
+            selectedCondition = conditions[3]; // Severe
+        }
+    } else if (selectedModel === 'proven') {
+        // Proven model (40.34%) - Conservative, tends toward minor/moderate
+        if (pseudoRandom < 0.2) {
+            selectedCondition = conditions[0]; // New
+        } else if (pseudoRandom < 0.6) {
+            selectedCondition = conditions[1]; // Minor
+        } else if (pseudoRandom < 0.9) {
+            selectedCondition = conditions[2]; // Moderate
+        } else {
+            selectedCondition = conditions[3]; // Severe
+        }
     }
     
     // Adjust confidence based on model accuracy
-    const baseConfidence = 0.70 + (accuracyFactor * 0.25); // 70-95%
-    const confidence = baseConfidence + Math.random() * 0.1;
+    const baseConfidence = 0.70 + (accuracyFactor * 0.25); // 70-95% range
+    const confidence = Math.min(0.99, Math.max(0.60, baseConfidence + (pseudoRandom * 0.1 - 0.05))); // ±5% variation, clamped to 60-99%
     
     return {
         predicted_class: selectedCondition.class,
@@ -375,12 +438,13 @@ function generateMockResult() {
             new: { probability: selectedCondition.probabilities[2], percentage: `${(selectedCondition.probabilities[2] * 100).toFixed(1)}%` },
             severe: { probability: selectedCondition.probabilities[3], percentage: `${(selectedCondition.probabilities[3] * 100).toFixed(1)}%` }
         },
-        analysis_id: Math.floor(Math.random() * 1000),
+        analysis_id: Math.floor(imageSeed % 1000) + 1, // Consistent ID based on image
         timestamp: new Date().toISOString(),
         user: 'basil03p',
         model_name: modelInfo.name,
         model_accuracy: modelInfo.accuracy,
-        model_file: modelInfo.filename
+        model_file: modelInfo.filename,
+        selected_model: selectedModel
     };
 }
 
@@ -391,6 +455,15 @@ function showResults(result) {
     
     // Display input image in results
     displayInputImage();
+    
+    // Log analysis result for debugging
+    console.log('📊 Analysis Result:', {
+        model: result.model_name,
+        accuracy: result.model_accuracy,
+        prediction: result.predicted_class,
+        confidence: result.confidence_percent,
+        selected_model: result.selected_model
+    });
     
     // Update status card
     updateStatusCard(result);
