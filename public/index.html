@@ -52,6 +52,70 @@
             <section class="hero">
                 <h2>AI-Powered Cookware Safety Analysis</h2>
                 <p>Upload images of your cookware to get instant damage assessment and safety recommendations</p>
+                
+                <!-- Model Selection -->
+                <div class="model-selection">
+                    <label for="modelSelect" class="model-label">🤖 Choose AI Model:</label>
+                    <select id="modelSelect" class="model-dropdown">
+                        <option value="optimized" selected>Optimized Model (71.02% accuracy) - Recommended</option>
+                        <option value="original">Original Model (44.89% accuracy)</option>
+                        <option value="proven">Proven Model (40.34% accuracy)</option>
+                    </select>
+                    <div class="model-info" id="modelInfo">
+                        <span class="model-badge optimized">⚡ Fastest & Most Accurate</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Model Selection Section -->
+            <section class="model-selection">
+                <div class="model-card">
+                    <h3>🤖 Choose AI Model</h3>
+                    <p>Select which trained model to use for analysis</p>
+                    
+                    <div class="model-options">
+                        <div class="model-option active" data-model="optimized" onclick="selectModel('optimized')">
+                            <div class="model-icon">⚡</div>
+                            <div class="model-info">
+                                <h4>Optimized Model</h4>
+                                <div class="model-stats">
+                                    <span class="accuracy">71.02% Accuracy</span>
+                                    <span class="badge recommended">Recommended</span>
+                                </div>
+                                <p>Fastest inference, balanced performance</p>
+                            </div>
+                        </div>
+                        
+                        <div class="model-option" data-model="original" onclick="selectModel('original')">
+                            <div class="model-icon">🔬</div>
+                            <div class="model-info">
+                                <h4>Original Model</h4>
+                                <div class="model-stats">
+                                    <span class="accuracy">55.11% Accuracy</span>
+                                    <span class="badge">Baseline</span>
+                                </div>
+                                <p>Original research model, experimental</p>
+                            </div>
+                        </div>
+                        
+                        <div class="model-option" data-model="proven" onclick="selectModel('proven')">
+                            <div class="model-icon">🏆</div>
+                            <div class="model-info">
+                                <h4>Proven Model</h4>
+                                <div class="model-stats">
+                                    <span class="accuracy">59.66% Accuracy</span>
+                                    <span class="badge">Stable</span>
+                                </div>
+                                <p>Proven in production, reliable results</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="selected-model-info">
+                        <span class="selected-label">Selected:</span>
+                        <span id="selectedModelName">Optimized Model (71.02% accuracy)</span>
+                    </div>
+                </div>
             </section>
 
             <!-- Upload Section -->
