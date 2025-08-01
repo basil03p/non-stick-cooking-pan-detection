@@ -18,6 +18,10 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
+    <!-- PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <!-- Meta tags for social sharing -->
     <meta property="og:title" content="Cookware Damage Analyzer">
     <meta property="og:description" content="AI-powered cookware safety analysis">
@@ -95,7 +99,7 @@
                 <div class="results-header">
                     <h2>🔍 Analysis Results</h2>
                     <div class="results-actions">
-                        <button class="btn btn-outline" onclick="downloadResults()">📄 Download Report</button>
+                        <button class="btn btn-outline" onclick="downloadPDFReport()">📄 Download PDF Report</button>
                         <button class="btn btn-outline" onclick="shareResults()">📤 Share</button>
                     </div>
                 </div>
@@ -118,6 +122,18 @@
 
                 <!-- Analysis Details -->
                 <div class="analysis-grid">
+                    <!-- Input Image -->
+                    <div class="analysis-card">
+                        <h4>📷 Input Image</h4>
+                        <div class="input-image-container">
+                            <img id="resultInputImage" alt="Original cookware image" class="result-image">
+                            <div class="image-info">
+                                <span id="imageFileName">cookware.jpg</span>
+                                <span id="imageSize">2.1 MB</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Probability Chart -->
                     <div class="analysis-card">
                         <h4>📊 Damage Probability</h4>
@@ -173,7 +189,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 Cookware Damage Analyzer by basil03p • AI-Powered Kitchen Safety</p>
+            <p>&copy; 2025 Cookware Damage Analyzer by <a href="https://github.com/basil03p" target="_blank">basil03p</a> • AI-Powered Kitchen Safety</p>
         </div>
     </footer>
 
