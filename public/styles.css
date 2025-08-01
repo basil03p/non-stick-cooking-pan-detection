@@ -412,6 +412,31 @@ body {
     font-weight: 600;
 }
 
+/* Input Image Display */
+.input-image-container {
+    text-align: center;
+}
+
+.result-image {
+    width: 100%;
+    max-width: 300px;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    margin-bottom: 1rem;
+}
+
+.image-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    background: var(--bg-secondary);
+    border-radius: 6px;
+}
+
 /* Safety Info */
 .safety-info {
     display: flex;

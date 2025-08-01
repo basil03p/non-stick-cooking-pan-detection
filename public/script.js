@@ -1,5 +1,6 @@
 // Global Variables
 let currentFile = null;
+let currentImageData = null;
 let analysisResult = null;
 let probabilityChart = null;
 
@@ -76,6 +77,7 @@ function processFile(file) {
     // Create preview
     const reader = new FileReader();
     reader.onload = function(e) {
+        currentImageData = e.target.result;
         previewImg.src = e.target.result;
         
         // Show preview, hide upload area
@@ -268,7 +270,7 @@ function generateMockResult() {
         analysis_id: Math.floor(Math.random() * 1000),
         timestamp: new Date().toISOString(),
         user: 'basil03p',
-        model_name: 'Optimized Cookware Classifier',
+        model_name: 'Optimized Cookware Classifier v2.0',
         model_accuracy: '71.02%'
     };
 }
@@ -277,6 +279,9 @@ function generateMockResult() {
 function showResults(result) {
     // Hide loading
     loadingSection.style.display = 'none';
+    
+    // Display input image in results
+    displayInputImage();
     
     // Update status card
     updateStatusCard(result);
@@ -293,6 +298,19 @@ function showResults(result) {
     
     // Scroll to results
     resultsSection.scrollIntoView({ behavior: 'smooth' });
+}
+
+// Display Input Image in Results
+function displayInputImage() {
+    if (currentImageData && currentFile) {
+        const resultImage = document.getElementById('resultInputImage');
+        const fileName = document.getElementById('imageFileName');
+        const fileSize = document.getElementById('imageSize');
+        
+        resultImage.src = currentImageData;
+        fileName.textContent = currentFile.name;
+        fileSize.textContent = formatFileSize(currentFile.size);
+    }
 }
 
 // Update Status Card
@@ -382,6 +400,7 @@ function createProbabilityChart(probabilities) {
 // Reset Upload
 function resetUpload() {
     currentFile = null;
+    currentImageData = null;
     fileInput.value = '';
     
     // Show upload area, hide preview
@@ -400,7 +419,156 @@ function analyzeAnother() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// Download Results
+// Download PDF Report
+async function downloadPDFReport() {
+    if (!analysisResult) return;
+    
+    try {
+        // Show loading indicator
+        const originalText = event.target.textContent;
+        event.target.textContent = '📄 Generating PDF...';
+        event.target.disabled = true;
+        
+        // Create PDF using jsPDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        
+        // Set fonts and colors
+        const primaryColor = [41, 128, 185];
+        const secondaryColor = [52, 73, 94];
+        const successColor = [46, 204, 113];
+        const warningColor = [241, 196, 15];
+        const dangerColor = [231, 76, 60];
+        
+        // Header
+        pdf.setFontSize(24);
+        pdf.setTextColor(...primaryColor);
+        pdf.text('🍳 Cookware Analysis Report', 20, 30);
+        
+        // Subtitle
+        pdf.setFontSize(14);
+        pdf.setTextColor(...secondaryColor);
+        pdf.text('AI-Powered Damage Assessment & Safety Analysis', 20, 42);
+        
+        // Analysis Info
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`Analysis ID: ${analysisResult.analysis_id}`, 20, 60);
+        pdf.text(`Date: ${new Date(analysisResult.timestamp).toLocaleString()}`, 20, 70);
+        pdf.text(`Analyzed by: ${analysisResult.user}`, 20, 80);
+        pdf.text(`Model: ${analysisResult.model_name} (${analysisResult.model_accuracy} accuracy)`, 20, 90);
+        
+        // Add input image if available
+        if (currentImageData) {
+            try {
+                const imgWidth = 60;
+                const imgHeight = 45;
+                pdf.addImage(currentImageData, 'JPEG', 20, 100, imgWidth, imgHeight);
+                pdf.text('Input Image:', 20, 155);
+                pdf.text(`File: ${currentFile.name}`, 20, 165);
+                pdf.text(`Size: ${formatFileSize(currentFile.size)}`, 20, 175);
+            } catch (e) {
+                console.log('Could not add image to PDF:', e);
+            }
+        }
+        
+        // Results Section
+        let yPos = currentImageData ? 190 : 110;
+        
+        // Status
+        pdf.setFontSize(16);
+        pdf.setTextColor(...primaryColor);
+        pdf.text('Analysis Results', 20, yPos);
+        yPos += 15;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`Status: ${analysisResult.status}`, 20, yPos);
+        yPos += 10;
+        pdf.text(`Confidence: ${analysisResult.confidence_percent}`, 20, yPos);
+        yPos += 10;
+        pdf.text(`Condition Score: ${analysisResult.condition_score}/100`, 20, yPos);
+        yPos += 20;
+        
+        // Safety Assessment
+        pdf.setFontSize(14);
+        pdf.setTextColor(...primaryColor);
+        pdf.text('Safety Assessment', 20, yPos);
+        yPos += 12;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        pdf.text(`Safety Level: ${analysisResult.safety_assessment}`, 20, yPos);
+        yPos += 10;
+        pdf.text(`Urgency: ${analysisResult.urgency_level}`, 20, yPos);
+        yPos += 10;
+        pdf.text(`Replacement Timeline: ${analysisResult.replacement_timeline}`, 20, yPos);
+        yPos += 20;
+        
+        // Recommendations
+        pdf.setFontSize(14);
+        pdf.setTextColor(...primaryColor);
+        pdf.text('Recommendations', 20, yPos);
+        yPos += 12;
+        
+        pdf.setFontSize(12);
+        pdf.setTextColor(0, 0, 0);
+        
+        // Split long text into multiple lines
+        const actionLines = pdf.splitTextToSize(`Action: ${analysisResult.recommended_action}`, 170);
+        pdf.text(actionLines, 20, yPos);
+        yPos += actionLines.length * 7 + 5;
+        
+        const tipsLines = pdf.splitTextToSize(`Care Tips: ${analysisResult.care_tips}`, 170);
+        pdf.text(tipsLines, 20, yPos);
+        yPos += tipsLines.length * 7 + 15;
+        
+        // Probability Breakdown
+        if (yPos < 250) {
+            pdf.setFontSize(14);
+            pdf.setTextColor(...primaryColor);
+            pdf.text('Probability Breakdown', 20, yPos);
+            yPos += 12;
+            
+            pdf.setFontSize(12);
+            pdf.setTextColor(0, 0, 0);
+            pdf.text(`New Condition: ${analysisResult.all_probabilities.new.percentage}`, 20, yPos);
+            yPos += 8;
+            pdf.text(`Minor Wear: ${analysisResult.all_probabilities.minor.percentage}`, 20, yPos);
+            yPos += 8;
+            pdf.text(`Moderate Damage: ${analysisResult.all_probabilities.moderate.percentage}`, 20, yPos);
+            yPos += 8;
+            pdf.text(`Severe Damage: ${analysisResult.all_probabilities.severe.percentage}`, 20, yPos);
+        }
+        
+        // Footer
+        pdf.setFontSize(10);
+        pdf.setTextColor(128, 128, 128);
+        pdf.text('Generated by Cookware Damage Analyzer - https://github.com/basil03p', 20, 280);
+        pdf.text('AI-Powered Kitchen Safety Analysis', 20, 290);
+        
+        // Save PDF
+        pdf.save(`cookware-analysis-report-${analysisResult.analysis_id}.pdf`);
+        
+        // Restore button
+        event.target.textContent = originalText;
+        event.target.disabled = false;
+        
+        showSuccess('PDF report downloaded successfully!');
+        
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        
+        // Fallback to JSON download
+        downloadResults();
+        
+        // Restore button
+        event.target.textContent = '📄 Download PDF Report';
+        event.target.disabled = false;
+    }
+}
+
+// Fallback JSON Download
 function downloadResults() {
     if (!analysisResult) return;
     
@@ -476,6 +644,14 @@ function setTheme(theme) {
 }
 
 // Utility Functions
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 function showError(message) {
     // Simple alert for now - you can enhance this with custom modals
     alert('❌ ' + message);
