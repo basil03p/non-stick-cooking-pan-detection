@@ -1,0 +1,52 @@
+[build]
+  # Build command for Netlify
+  command = "pip install -r requirements.txt && python -m flask --app app routes"
+  
+  # Publish directory (for static files)
+  publish = "public"
+  
+  # Functions directory (for serverless functions)
+  functions = "netlify/functions"
+
+[build.environment]
+  # Python version
+  PYTHON_VERSION = "3.11"
+  
+  # Environment variables
+  FLASK_ENV = "production"
+  PYTHONUNBUFFERED = "1"
+  TF_CPP_MIN_LOG_LEVEL = "2"
+  
+  # Model path for Netlify
+  MODEL_PATH = "/opt/build/repo/models/optimized_cookware_acc_0.2898.keras"
+
+# Redirects for SPA behavior
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Headers for CORS
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+
+# Edge Functions (optional)
+# [[edge_functions]]
+#   function = "analyze"
+#   path = "/api/analyze"
