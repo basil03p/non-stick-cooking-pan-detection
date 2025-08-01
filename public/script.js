@@ -3,6 +3,7 @@ let currentFile = null;
 let currentImageData = null;
 let analysisResult = null;
 let probabilityChart = null;
+let selectedModel = 'optimized'; // Default model
 
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
@@ -17,8 +18,100 @@ const resultsSection = document.getElementById('resultsSection');
 document.addEventListener('DOMContentLoaded', function() {
     initializeUpload();
     initializeTheme();
+    initializeModelSelection();
     console.log('🚀 Cookware Damage Analyzer initialized');
 });
+
+// Model Selection Functions
+function initializeModelSelection() {
+    const modelSelect = document.getElementById('modelSelect');
+    
+    if (modelSelect) {
+        // Add event listener for dropdown change
+        modelSelect.addEventListener('change', function() {
+            selectModel(this.value);
+        });
+    }
+    
+    // Set default model
+    selectModel('optimized');
+}
+
+function selectModel(modelType) {
+    // Update dropdown if it exists
+    const modelSelect = document.getElementById('modelSelect');
+    if (modelSelect) {
+        modelSelect.value = modelType;
+    }
+    
+    // Remove active class from all options (for backward compatibility)
+    document.querySelectorAll('.model-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    
+    // Add active class to selected option (for backward compatibility)
+    const selectedOption = document.querySelector(`[data-model="${modelType}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+    
+    // Update global variable
+    selectedModel = modelType;
+    
+    // Update model badge
+    updateModelBadge(modelType);
+    
+    // Update selected model display (for backward compatibility)
+    updateSelectedModelDisplay(modelType);
+    
+    console.log(`✅ Model selected: ${modelType}`);
+}
+
+function updateModelBadge(modelType) {
+    const modelInfo = document.getElementById('modelInfo');
+    if (modelInfo) {
+        const badge = modelInfo.querySelector('.model-badge');
+        const modelData = getModelInfo(modelType);
+        
+        if (badge) {
+            badge.className = `model-badge ${modelType}`;
+            badge.textContent = modelData.description;
+        }
+    }
+}
+
+function updateSelectedModelDisplay(modelType) {
+    const modelInfo = getModelInfo(modelType);
+    const selectedModelName = document.getElementById('selectedModelName');
+    if (selectedModelName) {
+        selectedModelName.textContent = `${modelInfo.name} (${modelInfo.accuracy} accuracy)`;
+    }
+}
+
+function getModelInfo(modelType) {
+    const models = {
+        optimized: {
+            name: 'Optimized Model',
+            accuracy: '71.02%',
+            filename: 'optimized_cookware_acc_0.2898.keras',
+            description: '⚡ Fastest & Most Accurate'
+        },
+        original: {
+            name: 'Original Model', 
+            accuracy: '44.89%',
+            filename: 'original_cookware_classifier_acc_0.4489.keras',
+            description: '🔧 Original Research Model'
+        },
+        proven: {
+            name: 'Proven Model',
+            accuracy: '40.34%', 
+            filename: 'proven_cookware_classifier_acc_0.4034.keras',
+            description: '📊 Baseline Performance'
+        }
+    };
+    
+    return models[modelType] || models.optimized;
+}
 
 // File Upload Initialization
 function initializeUpload() {
@@ -136,7 +229,8 @@ async function analyzeImage() {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                image: imageData
+                image: imageData,
+                model: selectedModel
             })
         });
         
@@ -189,6 +283,8 @@ async function simulateProgress() {
 
 // Generate Mock Result (for demo)
 function generateMockResult() {
+    const modelInfo = getModelInfo(selectedModel);
+    
     const conditions = [
         {
             class: 'new',
@@ -244,9 +340,21 @@ function generateMockResult() {
         }
     ];
     
-    // Random selection for demo
-    const selectedCondition = conditions[Math.floor(Math.random() * conditions.length)];
-    const confidence = 0.85 + Math.random() * 0.14; // 85-99%
+    // Adjust selection probability based on model accuracy
+    const accuracyFactor = parseFloat(modelInfo.accuracy) / 100;
+    let selectedCondition;
+    
+    if (accuracyFactor > 0.65) {
+        // High accuracy models tend to detect good condition more often
+        selectedCondition = conditions[Math.floor(Math.random() * 2)]; // New or minor
+    } else {
+        // Lower accuracy models have more varied results
+        selectedCondition = conditions[Math.floor(Math.random() * conditions.length)];
+    }
+    
+    // Adjust confidence based on model accuracy
+    const baseConfidence = 0.70 + (accuracyFactor * 0.25); // 70-95%
+    const confidence = baseConfidence + Math.random() * 0.1;
     
     return {
         predicted_class: selectedCondition.class,
@@ -270,8 +378,9 @@ function generateMockResult() {
         analysis_id: Math.floor(Math.random() * 1000),
         timestamp: new Date().toISOString(),
         user: 'basil03p',
-        model_name: 'Optimized Cookware Classifier v2.0',
-        model_accuracy: '71.02%'
+        model_name: modelInfo.name,
+        model_accuracy: modelInfo.accuracy,
+        model_file: modelInfo.filename
     };
 }
 

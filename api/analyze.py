@@ -44,6 +44,7 @@ class handler(BaseHTTPRequestHandler):
             # Parse JSON data
             try:
                 data = json.loads(post_data.decode('utf-8'))
+                selected_model = data.get('model', 'optimized')  # Default to optimized
             except json.JSONDecodeError:
                 self.send_error_response("Invalid JSON data", 400)
                 return
@@ -52,14 +53,42 @@ class handler(BaseHTTPRequestHandler):
                 self.send_error_response("No image data provided", 400)
                 return
             
+            # Get model information
+            model_info = self.get_model_info(selected_model)
+            
             # Try to load and use the actual model
-            result = self.analyze_with_model(data['image']) if TF_AVAILABLE else self.generate_mock_analysis()
+            result = self.analyze_with_model(data['image'], model_info) if TF_AVAILABLE else self.generate_mock_analysis(model_info)
             
             response = json.dumps(result)
             self.wfile.write(response.encode())
             
         except Exception as e:
             self.send_error_response(str(e), 500)
+    
+    def get_model_info(self, selected_model):
+        """Get model information based on selection"""
+        models = {
+            'optimized': {
+                'name': 'Optimized Model',
+                'filename': 'optimized_cookware_acc_0.2898.keras',
+                'accuracy': '71.02%',
+                'description': 'Fastest inference, balanced performance'
+            },
+            'original': {
+                'name': 'Original Model',
+                'filename': 'original_cookware_classifier_acc_0.4489.keras', 
+                'accuracy': '55.11%',
+                'description': 'Original research model, experimental'
+            },
+            'proven': {
+                'name': 'Proven Model',
+                'filename': 'proven_cookware_classifier_acc_0.4034.keras',
+                'accuracy': '59.66%', 
+                'description': 'Proven in production, reliable results'
+            }
+        }
+        
+        return models.get(selected_model, models['optimized'])
     
     def send_error_response(self, message, status_code):
         """Send error response"""
