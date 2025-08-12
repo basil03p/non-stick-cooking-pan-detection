@@ -113,23 +113,11 @@ def parse_model_filename(filename, file_size):
             'badge': 'High Performance',
             'badge_type': 'premium'
         })
-    elif 'optimized' in filename.lower():
-        # Extract accuracy from filename if present
-        accuracy = extract_accuracy_from_filename(filename)
-        model_info.update({
-            'display_name': 'Optimized Cookware Model',
-            'accuracy': accuracy or 71.0,
-            'model_type': 'optimized',
-            'description': 'Optimized cookware analysis model',
-            'icon': '⚡',
-            'badge': 'Optimized',
-            'badge_type': 'success'
-        })
     elif 'original' in filename.lower():
         accuracy = extract_accuracy_from_filename(filename)
         model_info.update({
             'display_name': 'Original Classifier',
-            'accuracy': accuracy or 44.9,
+            'accuracy': accuracy or 44.89,
             'model_type': 'baseline',
             'description': 'Original baseline classifier',
             'icon': '📊',
@@ -140,7 +128,7 @@ def parse_model_filename(filename, file_size):
         accuracy = extract_accuracy_from_filename(filename)
         model_info.update({
             'display_name': 'Proven Classifier',
-            'accuracy': accuracy or 40.3,
+            'accuracy': accuracy or 40.34,
             'model_type': 'research',
             'description': 'Proven research classifier',
             'icon': '🔬',
@@ -177,23 +165,11 @@ def get_default_models():
             'badge_type': 'premium'
         },
         {
-            'filename': 'optimized_cookware_acc_0.2898.keras',
-            'display_name': 'Optimized Cookware Model',
-            'file_size': 43429239,
-            'size_mb': 41.4,
-            'accuracy': 71.0,
-            'model_type': 'optimized',
-            'description': 'Optimized cookware analysis model',
-            'icon': '⚡',
-            'badge': 'Optimized',
-            'badge_type': 'success'
-        },
-        {
             'filename': 'original_cookware_classifier_acc_0.4489.keras',
             'display_name': 'Original Classifier',
             'file_size': 43429239,
             'size_mb': 41.4,
-            'accuracy': 44.9,
+            'accuracy': 44.89,
             'model_type': 'baseline',
             'description': 'Original baseline classifier',
             'icon': '📊',
@@ -205,7 +181,7 @@ def get_default_models():
             'display_name': 'Proven Classifier',
             'file_size': 43429231,
             'size_mb': 41.4,
-            'accuracy': 40.3,
+            'accuracy': 40.34,
             'model_type': 'research',
             'description': 'Proven research classifier',
             'icon': '🔬',

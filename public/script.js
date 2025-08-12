@@ -3,7 +3,7 @@ let currentFile = null;
 let currentImageData = null;
 let analysisResult = null;
 let probabilityChart = null;
-let selectedModel = 'optimized'; // Default model
+let selectedModel = 'wear-multiclass'; // Default model (exists in models folder)
 let availableModels = []; // Will be loaded dynamically
 
 // DOM Elements
@@ -62,20 +62,37 @@ async function loadAvailableModels() {
         }
         
         if (modelsData && modelsData.models && modelsData.models.length > 0) {
-            // Convert API format to internal format
-            availableModels = modelsData.models.map(model => ({
-                id: model.filename.replace(/\.(keras|h5|pb)$/, ''),
-                filename: model.filename,
-                display_name: model.display_name,
-                accuracy: model.accuracy,
-                accuracy_display: `${model.accuracy}%`,
-                type: model.model_type,
-                description: model.description,
-                icon: model.icon,
-                badge: model.badge,
-                badge_type: model.badge_type,
-                size_mb: model.size_mb
-            }));
+            // Convert API format to internal format with consistent IDs
+            availableModels = modelsData.models.map(model => {
+                // Create consistent ID that matches backend expectations
+                let modelId;
+                if (model.filename.includes('wear_multiclass')) {
+                    modelId = 'wear-multiclass';
+                } else if (model.filename.includes('original')) {
+                    modelId = 'original';
+                } else if (model.filename.includes('proven')) {
+                    modelId = 'proven';
+                } else {
+                    // Fallback: create ID from filename
+                    modelId = model.filename.replace(/\.(keras|h5|pb)$/, '').replace(/_/g, '-');
+                }
+                
+                return {
+                    id: modelId,
+                    filename: model.filename,
+                    display_name: model.display_name,
+                    name: model.display_name,
+                    accuracy: model.accuracy,
+                    accuracy_display: `${model.accuracy}%`,
+                    type: model.model_type,
+                    category: model.badge_type || 'standard',
+                    description: model.description,
+                    icon: model.icon,
+                    badge: model.badge,
+                    badge_type: model.badge_type,
+                    size_mb: model.size_mb
+                };
+            });
             
             console.log(`🎯 Found ${availableModels.length} models:`, availableModels);
             
@@ -83,11 +100,12 @@ async function loadAvailableModels() {
             initializeModelSelection();
             displayModelsGrid();
             
-            // Set default model to the highest accuracy one
+            // Set default model to the highest accuracy one (wear-multiclass)
             if (availableModels.length > 0) {
-                selectedModel = availableModels[0].id;
-                selectModel(availableModels[0].id);
-                console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
+                const bestModel = availableModels.find(m => m.id === 'wear-multiclass') || availableModels[0];
+                selectedModel = bestModel.id;
+                selectModel(bestModel.id);
+                console.log(`🤖 Default model set to: ${selectedModel} (${bestModel.accuracy_display})`);
             }
         } else {
             console.warn('⚠️ No models found from API, using fallback');
@@ -103,7 +121,7 @@ async function loadAvailableModels() {
 function loadFallbackModels() {
     availableModels = [
         {
-            id: 'wear-multiclass-model',
+            id: 'wear-multiclass',
             filename: 'wear_multiclass_model.h5',
             name: 'Wear Multiclass Model',
             accuracy: 72.5,
@@ -115,19 +133,19 @@ function loadFallbackModels() {
             color: 'green'
         },
         {
-            id: 'optimized-cookware',
-            filename: 'optimized_cookware_acc_0.2898.keras',
-            name: 'Optimized Cookware Model',
-            accuracy: 71.02,
-            accuracy_display: '71.0%',
-            category: 'premium',
-            badge: '⚡ Optimized',
-            description: 'Optimized cookware analysis model',
+            id: 'original',
+            filename: 'original_cookware_classifier_acc_0.4489.keras',
+            name: 'Original Classifier',
+            accuracy: 44.89,
+            accuracy_display: '44.9%',
+            category: 'basic',
+            badge: '📊 Basic',
+            description: 'Original baseline classifier',
             icon: '⚡',
             color: 'green'
         },
         {
-            id: 'original-cookware-classifier',
+            id: 'proven',
             filename: 'original_cookware_classifier_acc_0.4489.keras',
             name: 'Original Classifier',
             accuracy: 44.89,
@@ -139,7 +157,7 @@ function loadFallbackModels() {
             color: 'orange'
         },
         {
-            id: 'proven-cookware-classifier',
+            id: 'proven',
             filename: 'proven_cookware_classifier_acc_0.4034.keras',
             name: 'Proven Classifier',
             accuracy: 40.34,
@@ -595,6 +613,7 @@ async function analyzeImage() {
     
     console.log(`🔍 Analyzing with ${selectedModel} model (${getModelInfo(selectedModel).accuracy} accuracy)`);
     console.log(`📁 File: ${currentFile.name} (${formatFileSize(currentFile.size)})`);
+    console.log(`🔗 Sending model ID: "${selectedModel}" to backend`);
     
     // Show loading
     showLoading();
@@ -623,12 +642,17 @@ async function analyzeImage() {
             })
         });
         
+        console.log(`📤 Sent model: "${selectedModel}" to API`);
+        
         if (!response.ok) {
             throw new Error(`Analysis failed: ${response.statusText}`);
         }
         
         const result = await response.json();
         analysisResult = result;
+        
+        console.log(`📥 Backend used model: "${result.model_name}" from file: "${result.model_file}"`);
+        console.log(`🎯 Prediction: ${result.predicted_class} (${result.confidence_percent} confidence)`);
         
         // Show results
         showResults(result);

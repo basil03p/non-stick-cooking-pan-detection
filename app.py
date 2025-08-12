@@ -180,6 +180,14 @@ def analyze_cookware():
             return jsonify({'error': 'No image data provided'}), 400
         
         image_data = data['image']
+        selected_model = data.get('model', 'wear-multiclass')  # Default to wear multiclass
+        
+        # Get model info
+        model_info = get_model_info(selected_model)
+        logger.info(f"Using model: {model_info['name']} ({model_info['filename']})")
+        
+        # Try to load the selected model
+        current_model = load_selected_model(model_info['filename'])
         
         # Preprocess image
         processed_image = preprocess_image(image_data)
@@ -188,7 +196,7 @@ def analyze_cookware():
             return jsonify({'error': 'Failed to process image'}), 400
         
         # Make prediction if model is loaded
-        if model is not None:
+        if current_model is not None:
             try:
                 predictions = model.predict(processed_image)
                 predicted_class_idx = np.argmax(predictions[0])

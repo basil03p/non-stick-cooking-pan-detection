@@ -44,7 +44,7 @@ class handler(BaseHTTPRequestHandler):
             # Parse JSON data
             try:
                 data = json.loads(post_data.decode('utf-8'))
-                selected_model = data.get('model', 'optimized')  # Default to optimized
+                selected_model = data.get('model', 'wear-multiclass')  # Default to wear-multiclass (exists!)
             except json.JSONDecodeError:
                 self.send_error_response("Invalid JSON data", 400)
                 return
@@ -55,6 +55,9 @@ class handler(BaseHTTPRequestHandler):
             
             # Get model information
             model_info = self.get_model_info(selected_model)
+            
+            print(f"🔍 Frontend requested model: '{selected_model}'")
+            print(f"🎯 Backend will use model: '{model_info['name']}' from file: '{model_info['filename']}'")
             
             # Try to load and use the actual model
             result = self.analyze_with_model(data['image'], model_info) if TF_AVAILABLE else self.generate_mock_analysis(model_info)
@@ -68,27 +71,58 @@ class handler(BaseHTTPRequestHandler):
     def get_model_info(self, selected_model):
         """Get model information based on selection"""
         models = {
-            'optimized': {
-                'name': 'Optimized Model',
-                'filename': 'optimized_cookware_acc_0.2898.keras',
-                'accuracy': '71.02%',
-                'description': 'Fastest inference, balanced performance'
+            'wear-multiclass': {
+                'name': 'Wear Multiclass Model',
+                'filename': 'wear_multiclass_model.h5',
+                'accuracy': '72.5%',
+                'description': 'Advanced wear detection with multiclass classification'
+            },
+            'wear-multiclass-model': {  # Frontend uses this ID
+                'name': 'Wear Multiclass Model',
+                'filename': 'wear_multiclass_model.h5',
+                'accuracy': '72.5%',
+                'description': 'Advanced wear detection with multiclass classification'
             },
             'original': {
                 'name': 'Original Model',
                 'filename': 'original_cookware_classifier_acc_0.4489.keras', 
-                'accuracy': '55.11%',
+                'accuracy': '44.89%',
+                'description': 'Original research model, experimental'
+            },
+            'original-cookware-classifier': {  # Frontend uses this ID
+                'name': 'Original Model',
+                'filename': 'original_cookware_classifier_acc_0.4489.keras', 
+                'accuracy': '44.89%',
                 'description': 'Original research model, experimental'
             },
             'proven': {
                 'name': 'Proven Model',
                 'filename': 'proven_cookware_classifier_acc_0.4034.keras',
-                'accuracy': '59.66%', 
+                'accuracy': '40.34%', 
                 'description': 'Proven in production, reliable results'
+            },
+            'proven-cookware-classifier': {  # Frontend uses this ID
+                'name': 'Proven Model',
+                'filename': 'proven_cookware_classifier_acc_0.4034.keras',
+                'accuracy': '40.34%', 
+                'description': 'Proven in production, reliable results'
+            },
+            # Legacy/fallback mappings
+            'optimized': {
+                'name': 'Wear Multiclass Model',
+                'filename': 'wear_multiclass_model.h5',
+                'accuracy': '72.5%',
+                'description': 'Advanced wear detection (fallback for missing optimized model)'
+            },
+            'optimized-cookware': {  # Frontend uses this ID
+                'name': 'Wear Multiclass Model',
+                'filename': 'wear_multiclass_model.h5',
+                'accuracy': '72.5%',
+                'description': 'Advanced wear detection (fallback for missing optimized model)'
             }
         }
         
-        return models.get(selected_model, models['optimized'])
+        return models.get(selected_model, models['wear-multiclass'])
     
     def send_error_response(self, message, status_code):
         """Send error response"""
@@ -105,11 +139,14 @@ class handler(BaseHTTPRequestHandler):
         
         self.wfile.write(json.dumps(error_response).encode())
     
-    def analyze_with_model(self, image_data):
+    def analyze_with_model(self, image_data, model_info):
         """Analyze with actual TensorFlow model"""
         try:
-            # Load model (in production, this would be cached)
-            model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'optimized_cookware_acc_0.2898.keras')
+            # Load model based on selection (in production, this would be cached)
+            model_path = os.path.join(os.path.dirname(__file__), '..', 'models', model_info['filename'])
+            
+            print(f"🔄 Loading model: {model_info['name']} from {model_path}")
+            print(f"📁 Model file exists: {os.path.exists(model_path)}")
             
             if os.path.exists(model_path):
                 model = tf.keras.models.load_model(model_path)
@@ -135,15 +172,16 @@ class handler(BaseHTTPRequestHandler):
                     for i in range(len(class_names))
                 }
                 
-                return self.build_analysis_result(predicted_class, confidence, all_probabilities, use_model=True)
+                return self.build_analysis_result(predicted_class, confidence, all_probabilities, use_model=True, model_info=model_info)
             else:
                 # Fallback to mock if model not found
-                return self.generate_mock_analysis()
+                print(f"Model file not found: {model_path}")
+                return self.generate_mock_analysis(model_info)
                 
         except Exception as e:
             # Fallback to mock analysis if model fails
             print(f"Model analysis failed: {e}")
-            return self.generate_mock_analysis()
+            return self.generate_mock_analysis(model_info)
     
     def preprocess_image(self, image_data):
         """Preprocess image for model inference"""
@@ -174,7 +212,7 @@ class handler(BaseHTTPRequestHandler):
             print(f"Image preprocessing failed: {e}")
             return None
     
-    def build_analysis_result(self, predicted_class, confidence, all_probabilities, use_model=False):
+    def build_analysis_result(self, predicted_class, confidence, all_probabilities, use_model=False, model_info=None):
         """Build analysis result with condition details"""
         conditions = {
             'new': {
@@ -242,8 +280,9 @@ class handler(BaseHTTPRequestHandler):
             'analysis_id': random.randint(1000, 9999),
             'timestamp': datetime.now().isoformat() + 'Z',
             'user': 'basil03p',
-            'model_name': 'Optimized Cookware Classifier v2.0 (EfficientNetV2-B0)' if use_model else 'Demo Mode',
-            'model_accuracy': '71.02%' if use_model else '44.89% (fallback)',
+            'model_name': model_info['name'] if model_info else 'Demo Mode',
+            'model_accuracy': model_info['accuracy'] if model_info else '44.89% (fallback)',
+            'model_file': model_info['filename'] if model_info else 'unknown.keras',
             'deployment': 'vercel-serverless'
         }
     
@@ -255,7 +294,7 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()
     
-    def generate_mock_analysis(self):
+    def generate_mock_analysis(self, model_info=None):
         """Generate mock analysis for demo purposes"""
         
         conditions = [
@@ -351,6 +390,7 @@ class handler(BaseHTTPRequestHandler):
             'analysis_id': random.randint(1000, 9999),
             'timestamp': datetime.now().isoformat() + 'Z',
             'user': 'basil03p',
-            'model_name': 'EfficientNetV2-B0',
-            'model_accuracy': '44.89%'
+            'model_name': f"{model_info['name']} (Demo Mode)" if model_info else 'Demo Mode',
+            'model_accuracy': f"{model_info['accuracy']} (fallback)" if model_info else '44.89% (fallback)',
+            'model_file': model_info['filename'] if model_info else 'unknown.keras'
         }
