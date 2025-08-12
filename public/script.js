@@ -9,6 +9,7 @@ let availableModels = []; // Will be loaded dynamically
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
+const cameraInput = document.getElementById('cameraInput');
 const imagePreview = document.getElementById('imagePreview');
 const previewImg = document.getElementById('previewImg');
 const uploadSection = document.getElementById('uploadSection');
@@ -32,22 +33,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Load Available Models Dynamically
 async function loadAvailableModels() {
-    console.log('📋 Loading available models...');
+    console.log('📋 Loading available models from server...');
     
     try {
         const response = await fetch('/api/models');
         if (response.ok) {
             const data = await response.json();
-            availableModels = data.models || [];
-            console.log(`✅ Found ${availableModels.length} models:`, availableModels);
             
-            // Initialize model selection with loaded models
-            initializeModelSelection();
-            
-            // Set default model to the highest accuracy one
-            if (availableModels.length > 0) {
-                selectedModel = availableModels[0].id;
-                console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
+            if (data.status === 'success' && data.models && data.models.length > 0) {
+                availableModels = data.models;
+                console.log(`✅ Found ${availableModels.length} models:`, availableModels);
+                
+                // Initialize model selection with loaded models
+                initializeModelSelection();
+                displayModelsGrid();
+                
+                // Set default model to the highest accuracy one
+                if (availableModels.length > 0) {
+                    selectedModel = availableModels[0].id;
+                    selectModel(availableModels[0].id);
+                    console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
+                }
+            } else {
+                console.warn('⚠️ No models found from API, using fallback');
+                loadFallbackModels();
             }
         } else {
             console.warn('⚠️ Failed to load models from API, using fallback');
@@ -63,39 +72,59 @@ async function loadAvailableModels() {
 function loadFallbackModels() {
     availableModels = [
         {
-            id: 'optimized',
+            id: 'wear-multiclass-model',
+            filename: 'wear_multiclass_model.h5',
+            name: 'Wear Multiclass Model',
+            accuracy: 72.5,
+            accuracy_display: '72.5%',
+            category: 'premium',
+            badge: '⚡ High Performance',
+            description: 'Advanced multiclass wear detection model',
+            icon: '🏆',
+            color: 'green'
+        },
+        {
+            id: 'optimized-cookware',
             filename: 'optimized_cookware_acc_0.2898.keras',
-            name: 'Optimized Model',
+            name: 'Optimized Cookware Model',
             accuracy: 71.02,
             accuracy_display: '71.0%',
             category: 'premium',
-            badge: '⚡ High Performance',
-            description: 'Optimized Model - 71.0% accuracy'
+            badge: '⚡ Optimized',
+            description: 'Optimized cookware analysis model',
+            icon: '⚡',
+            color: 'green'
         },
         {
-            id: 'original',
+            id: 'original-cookware-classifier',
             filename: 'original_cookware_classifier_acc_0.4489.keras',
             name: 'Original Classifier',
             accuracy: 44.89,
             accuracy_display: '44.9%',
-            category: 'standard',
-            badge: '🎯 Balanced',
-            description: 'Original Classifier - 44.9% accuracy'
+            category: 'basic',
+            badge: '📊 Basic',
+            description: 'Original baseline classifier',
+            icon: '📊',
+            color: 'orange'
         },
         {
-            id: 'proven',
+            id: 'proven-cookware-classifier',
             filename: 'proven_cookware_classifier_acc_0.4034.keras',
             name: 'Proven Classifier',
             accuracy: 40.34,
             accuracy_display: '40.3%',
             category: 'basic',
-            badge: '📊 Basic',
-            description: 'Proven Classifier - 40.3% accuracy'
+            badge: '� Research',
+            description: 'Proven research classifier',
+            icon: '🔬',
+            color: 'orange'
         }
     ];
     
     initializeModelSelection();
+    displayModelsGrid();
     selectedModel = availableModels[0].id;
+    selectModel(availableModels[0].id);
     console.log('✅ Fallback models loaded');
 }
 function testModelConsistency() {
@@ -123,6 +152,60 @@ function testModelConsistency() {
     // Restore original file
     currentFile = originalFile;
     console.log('✅ Model consistency test completed');
+}
+
+// Display Models in Grid Format
+function displayModelsGrid() {
+    const modelGrid = document.getElementById('modelGrid');
+    if (!modelGrid || availableModels.length === 0) {
+        console.warn('⚠️ Model grid element not found or no models available');
+        return;
+    }
+    
+    // Clear loading content
+    modelGrid.innerHTML = '';
+    
+    // Create model cards
+    availableModels.forEach(model => {
+        const modelCard = createModelCard(model);
+        modelGrid.appendChild(modelCard);
+    });
+    
+    console.log(`✅ Displayed ${availableModels.length} models in grid`);
+}
+
+// Create Model Card Element
+function createModelCard(model) {
+    const card = document.createElement('div');
+    card.className = `model-card ${model.category}`;
+    card.dataset.model = model.id;
+    card.onclick = () => selectModel(model.id);
+    
+    // Determine if this should be the default selected model
+    const isSelected = model.id === selectedModel || (availableModels[0] && model.id === availableModels[0].id);
+    if (isSelected) {
+        card.classList.add('selected');
+    }
+    
+    card.innerHTML = `
+        <div class="model-header">
+            <div class="model-icon">${model.icon || '🤖'}</div>
+            <div class="model-badge ${model.category}">${model.badge}</div>
+        </div>
+        <div class="model-content">
+            <h4 class="model-name">${model.name}</h4>
+            <div class="model-accuracy">${model.accuracy_display} accuracy</div>
+            <p class="model-description">${model.description}</p>
+        </div>
+        <div class="model-footer">
+            <div class="model-size">${model.file_size_mb ? model.file_size_mb + ' MB' : 'Size: Unknown'}</div>
+            <div class="model-status">
+                ${model.recommended ? '<span class="recommended">⭐ Recommended</span>' : ''}
+            </div>
+        </div>
+    `;
+    
+    return card;
 }
 
 // Model Selection Functions
@@ -162,94 +245,241 @@ function initializeModelSelection() {
     console.log('✅ Model selection initialized with dynamic models');
 }
 
-function selectModel(modelType) {
-    // Update dropdown if it exists
-    const modelSelect = document.getElementById('modelSelect');
-    if (modelSelect) {
-        modelSelect.value = modelType;
-    }
+function selectModel(modelId) {
+    // Update global variable
+    selectedModel = modelId;
     
-    // Remove active class from all options (for backward compatibility)
-    document.querySelectorAll('.model-option').forEach(option => {
-        option.classList.remove('active');
+    // Update visual selection in grid
+    document.querySelectorAll('.model-card').forEach(card => {
+        card.classList.remove('selected');
     });
     
-    // Add active class to selected option (for backward compatibility)
-    const selectedOption = document.querySelector(`[data-model="${modelType}"]`);
-    if (selectedOption) {
-        selectedOption.classList.add('active');
+    const selectedCard = document.querySelector(`[data-model="${modelId}"]`);
+    if (selectedCard) {
+        selectedCard.classList.add('selected');
     }
     
-    // Update global variable
-    selectedModel = modelType;
+    // Update selected model display
+    updateSelectedModelDisplay(modelId);
     
-    // Update model badge
-    updateModelBadge(modelType);
+    console.log(`✅ Model selected: ${modelId}`);
     
-    // Update selected model display (for backward compatibility)
-    updateSelectedModelDisplay(modelType);
-    
-    console.log(`✅ Model selected: ${modelType}`);
-}
-
-function updateModelBadge(modelType) {
-    const modelInfo = document.getElementById('modelInfo');
-    if (modelInfo) {
-        const badge = modelInfo.querySelector('.model-badge');
-        const modelData = getModelInfo(modelType);
-        
-        if (badge) {
-            badge.className = `model-badge ${modelType}`;
-            badge.textContent = modelData.description;
-        }
+    // Trigger visual feedback
+    if (selectedCard) {
+        selectedCard.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            selectedCard.style.transform = 'scale(1)';
+        }, 150);
     }
 }
 
-function updateSelectedModelDisplay(modelType) {
-    const modelInfo = getModelInfo(modelType);
+function updateSelectedModelDisplay(modelId) {
+    const modelInfo = getModelInfo(modelId);
+    
+    // Update main display
     const selectedModelName = document.getElementById('selectedModelName');
     if (selectedModelName) {
-        selectedModelName.textContent = `${modelInfo.name} (${modelInfo.accuracy} accuracy)`;
+        selectedModelName.textContent = `${modelInfo.name} (${modelInfo.accuracy})`;
+    }
+    
+    // Update badge display
+    const selectedModelBadge = document.getElementById('selectedModelBadge');
+    if (selectedModelBadge) {
+        selectedModelBadge.textContent = modelInfo.badge || '🤖 AI Model';
+        selectedModelBadge.className = `selected-model-badge ${modelInfo.category || 'standard'}`;
     }
 }
 
-function getModelInfo(modelType) {
+function getModelInfo(modelId) {
     // Find model in available models
-    const model = availableModels.find(m => m.id === modelType);
+    const model = availableModels.find(m => m.id === modelId);
     
     if (model) {
         return {
             name: model.name,
             accuracy: model.accuracy_display,
             filename: model.filename,
-            description: model.badge,
-            category: model.category
+            badge: model.badge,
+            category: model.category,
+            description: model.description
         };
     }
     
     // Fallback for unknown models
-    console.warn(`⚠️ Model ${modelType} not found in available models`);
+    console.warn(`⚠️ Model ${modelId} not found in available models`);
     return {
         name: 'Unknown Model',
         accuracy: '0.0%',
         filename: 'unknown.keras',
-        description: '❓ Unknown Model',
-        category: 'experimental'
+        badge: '❓ Unknown Model',
+        category: 'experimental',
+        description: 'Unknown model'
     };
+}
+
+// Camera and Upload Functions
+function selectFromGallery() {
+    fileInput.click();
+}
+
+function openCamera() {
+    if (detectMobileDevice()) {
+        cameraInput.click();
+    } else {
+        // For desktop, try to open camera with getUserMedia
+        openCameraStream();
+    }
+}
+
+function detectMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+async function openCameraStream() {
+    try {
+        // Check if camera is available
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('Camera access is not supported on this browser');
+            return;
+        }
+        
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment' // Use back camera if available
+            } 
+        });
+        
+        // Create camera modal
+        createCameraModal(stream);
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        if (error.name === 'NotAllowedError') {
+            alert('Camera access denied. Please enable camera permissions and try again.');
+        } else if (error.name === 'NotFoundError') {
+            alert('No camera found on this device.');
+        } else {
+            alert('Error accessing camera: ' + error.message);
+        }
+    }
+}
+
+function createCameraModal(stream) {
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.className = 'camera-modal';
+    modal.innerHTML = `
+        <div class="camera-container">
+            <div class="camera-header">
+                <h3>📷 Take Photo</h3>
+                <button class="close-camera" onclick="closeCameraModal()">✕</button>
+            </div>
+            <div class="camera-video-container">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="cameraCanvas" style="display: none;"></canvas>
+            </div>
+            <div class="camera-controls">
+                <button class="btn btn-secondary" onclick="closeCameraModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="capturePhoto()">📸 Capture</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Set video stream
+    const video = document.getElementById('cameraVideo');
+    video.srcObject = stream;
+    
+    // Store stream reference for cleanup
+    window.currentCameraStream = stream;
+}
+
+function capturePhoto() {
+    const video = document.getElementById('cameraVideo');
+    const canvas = document.getElementById('cameraCanvas');
+    const context = canvas.getContext('2d');
+    
+    // Set canvas dimensions to video dimensions
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    // Draw video frame to canvas
+    context.drawImage(video, 0, 0);
+    
+    // Convert to blob and process as file
+    canvas.toBlob((blob) => {
+        const file = new File([blob], 'camera-capture.jpg', { type: 'image/jpeg' });
+        processFile(file);
+        closeCameraModal();
+    }, 'image/jpeg', 0.8);
+}
+
+function closeCameraModal() {
+    // Stop camera stream
+    if (window.currentCameraStream) {
+        window.currentCameraStream.getTracks().forEach(track => track.stop());
+        window.currentCameraStream = null;
+    }
+    
+    // Remove modal
+    const modal = document.querySelector('.camera-modal');
+    if (modal) {
+        modal.remove();
+    }
 }
 
 // File Upload Initialization
 function initializeUpload() {
-    // Click to upload
-    uploadArea.addEventListener('click', () => fileInput.click());
+    // Click to upload (for backward compatibility)
+    uploadArea.addEventListener('click', (e) => {
+        // Don't trigger if clicking on a button
+        if (!e.target.closest('.upload-btn')) {
+            fileInput.click();
+        }
+    });
     
     // File input change
     fileInput.addEventListener('change', handleFileSelect);
+    
+    // Camera input change
+    if (cameraInput) {
+        cameraInput.addEventListener('change', handleFileSelect);
+    }
     
     // Drag and drop
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleDrop);
+    
+    // Hide camera button on desktop if no camera available
+    checkCameraAvailability();
+}
+
+// Check Camera Availability
+async function checkCameraAvailability() {
+    const cameraBtn = document.getElementById('cameraBtn');
+    if (!cameraBtn) return;
+    
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            // Hide camera button if not supported
+            cameraBtn.style.display = 'none';
+            return;
+        }
+        
+        // Check if any video input devices are available
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasCamera = devices.some(device => device.kind === 'videoinput');
+        
+        if (!hasCamera && !detectMobileDevice()) {
+            cameraBtn.style.display = 'none';
+        }
+    } catch (error) {
+        // Hide camera button if enumeration fails
+        cameraBtn.style.display = 'none';
+        console.warn('Camera availability check failed:', error);
+    }
 }
 
 // Handle File Selection

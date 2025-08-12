@@ -120,10 +120,22 @@
                         <div class="upload-content">
                             <div class="upload-icon">📸</div>
                             <h3>Drop your cookware image here</h3>
-                            <p>or <span class="browse-text">browse files</span></p>
+                            <p>or choose your upload method</p>
+                            
+                            <!-- Upload Options -->
+                            <div class="upload-options">
+                                <button class="upload-btn primary" onclick="selectFromGallery()">
+                                    📁 Browse Files
+                                </button>
+                                <button class="upload-btn secondary" onclick="openCamera()" id="cameraBtn">
+                                    📷 Take Photo
+                                </button>
+                            </div>
+                            
                             <p class="file-info">Supports JPG, PNG, JPEG • Max 10MB</p>
                         </div>
                         <input type="file" id="fileInput" accept="image/*" hidden>
+                        <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
                     </div>
                     
                     <!-- Image Preview -->
