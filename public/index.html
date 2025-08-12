@@ -53,31 +53,26 @@
                 <h2>AI-Powered Cookware Safety Analysis</h2>
                 <p>Upload images of your cookware to get instant damage assessment and safety recommendations</p>
                 
-                <!-- Model Selection -->
-                <div class="model-selection">
-                    <label for="modelSelect" class="model-label">🤖 Choose AI Model:</label>
-                    <select id="modelSelect" class="model-dropdown">
-                        <option value="optimized" selected>Optimized Model (71.02% accuracy) - Recommended</option>
-                        <option value="original">Original Model (44.89% accuracy)</option>
-                        <option value="proven">Proven Model (40.34% accuracy)</option>
-                    </select>
-                    <div class="model-info" id="modelInfo">
-                        <span class="model-badge optimized">⚡ Fastest & Most Accurate</span>
+                <!-- Dynamic Model Selection -->
+                <div class="model-selection-container">
+                    <h3>🤖 AI Model Selection</h3>
+                    <p>Choose from available trained models for analysis</p>
+                    
+                    <div class="model-grid" id="modelGrid">
+                        <!-- Models will be loaded dynamically -->
+                        <div class="model-loading">
+                            <div class="loading-spinner"></div>
+                            <p>Loading available models...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="model-info-display" id="selectedModelInfo">
+                        <span class="selected-model-text">Selected Model: </span>
+                        <span class="selected-model-name" id="selectedModelName">Loading...</span>
+                        <span class="selected-model-badge" id="selectedModelBadge">🤖 AI Model</span>
                     </div>
                 </div>
             </section>
-
-            <!-- Model Selection Section -->
-            <section class="model-selection">
-                <div class="model-card">
-                    <h3>🤖 Choose AI Model</h3>
-                    <p>Select which trained model to use for analysis</p>
-                    
-                    <div class="model-options">
-                        <div class="model-option active" data-model="optimized" onclick="selectModel('optimized')">
-                            <div class="model-icon">⚡</div>
-                            <div class="model-info">
-                                <h4>Optimized Model</h4>
                                 <div class="model-stats">
                                     <span class="accuracy">71.02% Accuracy</span>
                                     <span class="badge recommended">Recommended</span>

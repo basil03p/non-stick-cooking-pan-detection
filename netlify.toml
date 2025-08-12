@@ -1,6 +1,6 @@
 [build]
   # Build command for Netlify
-  command = "pip install -r requirements.txt && python -m flask --app app routes"
+  command = "pip install -r requirements.txt"
   
   # Publish directory (for static files)
   publish = "public"

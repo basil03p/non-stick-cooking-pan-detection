@@ -4,6 +4,7 @@ let currentImageData = null;
 let analysisResult = null;
 let probabilityChart = null;
 let selectedModel = 'optimized'; // Default model
+let availableModels = []; // Will be loaded dynamically
 
 // DOM Elements
 const uploadArea = document.getElementById('uploadArea');
@@ -18,30 +19,104 @@ const resultsSection = document.getElementById('resultsSection');
 document.addEventListener('DOMContentLoaded', function() {
     initializeUpload();
     initializeTheme();
-    initializeModelSelection();
+    loadAvailableModels(); // Load models dynamically
     console.log('🚀 Cookware Damage Analyzer initialized');
-    console.log(`🤖 Default model: ${selectedModel}`);
     
-    // Test model selection consistency
-    testModelConsistency();
+    // Test model selection consistency after models are loaded
+    setTimeout(() => {
+        if (availableModels.length > 0) {
+            testModelConsistency();
+        }
+    }, 1000);
 });
 
-// Test Model Consistency
+// Load Available Models Dynamically
+async function loadAvailableModels() {
+    console.log('📋 Loading available models...');
+    
+    try {
+        const response = await fetch('/api/models');
+        if (response.ok) {
+            const data = await response.json();
+            availableModels = data.models || [];
+            console.log(`✅ Found ${availableModels.length} models:`, availableModels);
+            
+            // Initialize model selection with loaded models
+            initializeModelSelection();
+            
+            // Set default model to the highest accuracy one
+            if (availableModels.length > 0) {
+                selectedModel = availableModels[0].id;
+                console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
+            }
+        } else {
+            console.warn('⚠️ Failed to load models from API, using fallback');
+            loadFallbackModels();
+        }
+    } catch (error) {
+        console.warn('⚠️ Error loading models:', error);
+        loadFallbackModels();
+    }
+}
+
+// Fallback Models (if API fails)
+function loadFallbackModels() {
+    availableModels = [
+        {
+            id: 'optimized',
+            filename: 'optimized_cookware_acc_0.2898.keras',
+            name: 'Optimized Model',
+            accuracy: 71.02,
+            accuracy_display: '71.0%',
+            category: 'premium',
+            badge: '⚡ High Performance',
+            description: 'Optimized Model - 71.0% accuracy'
+        },
+        {
+            id: 'original',
+            filename: 'original_cookware_classifier_acc_0.4489.keras',
+            name: 'Original Classifier',
+            accuracy: 44.89,
+            accuracy_display: '44.9%',
+            category: 'standard',
+            badge: '🎯 Balanced',
+            description: 'Original Classifier - 44.9% accuracy'
+        },
+        {
+            id: 'proven',
+            filename: 'proven_cookware_classifier_acc_0.4034.keras',
+            name: 'Proven Classifier',
+            accuracy: 40.34,
+            accuracy_display: '40.3%',
+            category: 'basic',
+            badge: '📊 Basic',
+            description: 'Proven Classifier - 40.3% accuracy'
+        }
+    ];
+    
+    initializeModelSelection();
+    selectedModel = availableModels[0].id;
+    console.log('✅ Fallback models loaded');
+}
 function testModelConsistency() {
     console.log('🧪 Testing model consistency...');
+    
+    if (availableModels.length === 0) {
+        console.warn('⚠️ No models available for testing');
+        return;
+    }
     
     // Simulate a test file for consistent results
     const testFile = { name: 'test-cookware.jpg', size: 1024 };
     const originalFile = currentFile;
     currentFile = testFile;
     
-    // Test each model
-    const models = ['optimized', 'original', 'proven'];
-    models.forEach(model => {
+    // Test each available model
+    availableModels.forEach(model => {
         const originalModel = selectedModel;
-        selectedModel = model;
+        selectedModel = model.id;
         const result = generateMockResult();
-        console.log(`📊 ${model} model: ${result.predicted_class} (${result.confidence_percent})`);
+        console.log(`📊 ${model.name}: ${result.predicted_class} (${result.confidence_percent})`);
         selectedModel = originalModel;
     });
     
@@ -52,17 +127,39 @@ function testModelConsistency() {
 
 // Model Selection Functions
 function initializeModelSelection() {
+    if (availableModels.length === 0) {
+        console.warn('⚠️ No models available for selection');
+        return;
+    }
+    
     const modelSelect = document.getElementById('modelSelect');
     
     if (modelSelect) {
+        // Clear existing options
+        modelSelect.innerHTML = '';
+        
+        // Add options for each available model
+        availableModels.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = `${model.name} (${model.accuracy_display})`;
+            option.dataset.accuracy = model.accuracy;
+            option.dataset.category = model.category;
+            modelSelect.appendChild(option);
+        });
+        
         // Add event listener for dropdown change
         modelSelect.addEventListener('change', function() {
             selectModel(this.value);
         });
     }
     
-    // Set default model
-    selectModel('optimized');
+    // Set default model to highest accuracy
+    if (availableModels.length > 0) {
+        selectModel(availableModels[0].id);
+    }
+    
+    console.log('✅ Model selection initialized with dynamic models');
 }
 
 function selectModel(modelType) {
@@ -117,28 +214,28 @@ function updateSelectedModelDisplay(modelType) {
 }
 
 function getModelInfo(modelType) {
-    const models = {
-        optimized: {
-            name: 'Optimized Model',
-            accuracy: '71.02%',
-            filename: 'optimized_cookware_acc_0.2898.keras',
-            description: '⚡ Fastest & Most Accurate'
-        },
-        original: {
-            name: 'Original Model', 
-            accuracy: '44.89%',
-            filename: 'original_cookware_classifier_acc_0.4489.keras',
-            description: '🔧 Original Research Model'
-        },
-        proven: {
-            name: 'Proven Model',
-            accuracy: '40.34%', 
-            filename: 'proven_cookware_classifier_acc_0.4034.keras',
-            description: '📊 Baseline Performance'
-        }
-    };
+    // Find model in available models
+    const model = availableModels.find(m => m.id === modelType);
     
-    return models[modelType] || models.optimized;
+    if (model) {
+        return {
+            name: model.name,
+            accuracy: model.accuracy_display,
+            filename: model.filename,
+            description: model.badge,
+            category: model.category
+        };
+    }
+    
+    // Fallback for unknown models
+    console.warn(`⚠️ Model ${modelType} not found in available models`);
+    return {
+        name: 'Unknown Model',
+        accuracy: '0.0%',
+        filename: 'unknown.keras',
+        description: '❓ Unknown Model',
+        category: 'experimental'
+    };
 }
 
 // File Upload Initialization
@@ -314,8 +411,6 @@ async function simulateProgress() {
 
 // Generate Mock Result (for demo)
 function generateMockResult() {
-    const modelInfo = getModelInfo(selectedModel);
-    
     const conditions = [
         {
             class: 'new',
@@ -372,7 +467,8 @@ function generateMockResult() {
     ];
     
     // More realistic model behavior based on selected model
-    const accuracyFactor = parseFloat(modelInfo.accuracy) / 100;
+    const modelInfo = getModelInfo(selectedModel);
+    const accuracyFactor = modelInfo.accuracy ? parseFloat(modelInfo.accuracy) / 100 : 0.5;
     let selectedCondition;
     
     // Create a deterministic but varied selection based on image characteristics
@@ -380,39 +476,47 @@ function generateMockResult() {
     const imageSeed = currentFile ? currentFile.name.length + currentFile.size : Date.now();
     const pseudoRandom = (imageSeed * 9301 + 49297) % 233280 / 233280;
     
-    if (selectedModel === 'optimized') {
-        // Optimized model (71.02%) - Better at detecting good condition
-        if (pseudoRandom < 0.4) {
-            selectedCondition = conditions[0]; // New condition
-        } else if (pseudoRandom < 0.7) {
-            selectedCondition = conditions[1]; // Minor wear
-        } else if (pseudoRandom < 0.9) {
-            selectedCondition = conditions[2]; // Moderate
+    // Model-specific behavior based on accuracy and category
+    const currentModel = availableModels.find(m => m.id === selectedModel);
+    if (currentModel) {
+        if (currentModel.category === 'premium' && currentModel.accuracy >= 70) {
+            // High-accuracy models - Better at detecting good condition
+            if (pseudoRandom < 0.4) {
+                selectedCondition = conditions[0]; // New condition
+            } else if (pseudoRandom < 0.7) {
+                selectedCondition = conditions[1]; // Minor wear
+            } else if (pseudoRandom < 0.9) {
+                selectedCondition = conditions[2]; // Moderate
+            } else {
+                selectedCondition = conditions[3]; // Severe
+            }
+        } else if (currentModel.category === 'standard') {
+            // Mid-range models - Balanced distribution
+            if (pseudoRandom < 0.25) {
+                selectedCondition = conditions[0]; // New
+            } else if (pseudoRandom < 0.5) {
+                selectedCondition = conditions[1]; // Minor
+            } else if (pseudoRandom < 0.75) {
+                selectedCondition = conditions[2]; // Moderate
+            } else {
+                selectedCondition = conditions[3]; // Severe
+            }
         } else {
-            selectedCondition = conditions[3]; // Severe
+            // Basic/experimental models - More conservative, tend toward damage detection
+            if (pseudoRandom < 0.2) {
+                selectedCondition = conditions[0]; // New
+            } else if (pseudoRandom < 0.4) {
+                selectedCondition = conditions[1]; // Minor
+            } else if (pseudoRandom < 0.7) {
+                selectedCondition = conditions[2]; // Moderate
+            } else {
+                selectedCondition = conditions[3]; // Severe
+            }
         }
-    } else if (selectedModel === 'original') {
-        // Original model (44.89%) - More random but functional
-        if (pseudoRandom < 0.25) {
-            selectedCondition = conditions[0]; // New
-        } else if (pseudoRandom < 0.5) {
-            selectedCondition = conditions[1]; // Minor
-        } else if (pseudoRandom < 0.75) {
-            selectedCondition = conditions[2]; // Moderate
-        } else {
-            selectedCondition = conditions[3]; // Severe
-        }
-    } else if (selectedModel === 'proven') {
-        // Proven model (40.34%) - Conservative, tends toward minor/moderate
-        if (pseudoRandom < 0.2) {
-            selectedCondition = conditions[0]; // New
-        } else if (pseudoRandom < 0.6) {
-            selectedCondition = conditions[1]; // Minor
-        } else if (pseudoRandom < 0.9) {
-            selectedCondition = conditions[2]; // Moderate
-        } else {
-            selectedCondition = conditions[3]; // Severe
-        }
+    } else {
+        // Fallback for unknown models
+        const index = Math.floor(pseudoRandom * conditions.length);
+        selectedCondition = conditions[index];
     }
     
     // Adjust confidence based on model accuracy
