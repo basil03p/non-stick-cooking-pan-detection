@@ -25,14 +25,14 @@ def load_model():
     """Load the optimized cookware model"""
     global model
     try:
-        # Use the optimized model as default
-        model_path = os.path.join('models', 'optimized_cookware_acc_0.2898.keras')
+        # Use the wear multiclass model as default
+        model_path = os.path.join('models', 'wear_multiclass_model.h5')
         if os.path.exists(model_path):
             model = tf.keras.models.load_model(model_path)
-            logger.info(f"Optimized model loaded successfully from {model_path}")
+            logger.info(f"Wear multiclass model loaded successfully from {model_path}")
             return True
         else:
-            # Fallback to other models if optimized one is not found
+            # Fallback to other models if wear multiclass one is not found
             fallback_models = [
                 'proven_cookware_classifier_acc_0.4034.keras',
                 'original_cookware_classifier_acc_0.4489.keras'
@@ -146,7 +146,7 @@ def serve_static(path):
 def health_check():
     """Health check endpoint"""
     model_status = "loaded" if model is not None else "not_loaded"
-    model_info = "optimized_cookware_acc_0.2898.keras" if model is not None else "none"
+    model_info = "wear_multiclass_model.h5" if model is not None else "none"
     
     return jsonify({
         'status': 'healthy',
@@ -256,9 +256,9 @@ def analyze_cookware():
             'analysis_id': np.random.randint(1000, 9999),
             'timestamp': datetime.now().isoformat() + 'Z',
             'user': 'basil03p',
-            'model_name': 'Optimized Cookware Classifier v2.0',
-            'model_accuracy': '71.02%',  # Optimized model accuracy (100% - 28.98% loss)
-            'model_file': 'optimized_cookware_acc_0.2898.keras'
+            'model_name': 'Wear Multiclass Classifier v2.0',
+            'model_accuracy': '72.5%',  # Wear multiclass model accuracy
+            'model_file': 'wear_multiclass_model.h5'
         }
         
         return jsonify(result)

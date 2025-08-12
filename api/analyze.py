@@ -59,6 +59,11 @@ class handler(BaseHTTPRequestHandler):
             print(f"🔍 Frontend requested model: '{selected_model}'")
             print(f"🎯 Backend will use model: '{model_info['name']}' from file: '{model_info['filename']}'")
             
+            # Verify the model file actually exists
+            model_path = os.path.join(os.path.dirname(__file__), '..', 'models', model_info['filename'])
+            print(f"📁 Looking for model at: {model_path}")
+            print(f"📋 File exists: {os.path.exists(model_path)}")
+            
             # Try to load and use the actual model
             result = self.analyze_with_model(data['image'], model_info) if TF_AVAILABLE else self.generate_mock_analysis(model_info)
             

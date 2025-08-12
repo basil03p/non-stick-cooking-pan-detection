@@ -2,7 +2,7 @@
 
 **AI-powered cookware condition assessment using deep learning**
 
-This project uses a CNN (EfficientNetV2-B0) to analyze images of cookware and classify their condition. The optimized model achieves 71.02% accuracy with no external API dependencies.
+This project uses a CNN (EfficientNetV2-B0) to analyze images of cookware and classify their condition. The wear multiclass model achieves 72.5% accuracy with no external API dependencies.
 
 ## 🌐 Multi-Platform Deployment
 
@@ -22,7 +22,7 @@ Deploy on **3 different platforms** with a single codebase:
 
 - **No API Keys Required** - Self-contained ML model
 - **Fast Analysis** - EfficientNetV2-B0 optimized for speed
-- **71.02% Accuracy** - Proven model performance
+- **72.5% Accuracy** - Proven model performance
 - **Multi-Platform** - Deploy anywhere
 - **Responsive UI** - Works on all devices
 
@@ -126,7 +126,7 @@ cookware-analyzer/
 │
 ├── 🤖 ML Model
 │   └── models/
-│       └── optimized_cookware_acc_0.2898.keras  # 71.02% accuracy
+│       └── wear_multiclass_model.h5  # 72.5% accuracy
 │
 ├── 🔧 Backend APIs
 │   ├── app.py                  # Main Flask app (Koyeb)
@@ -148,12 +148,12 @@ cookware-analyzer/
 
 ## 🧠 Model Information
 
-### Optimized Model
+### Wear Multiclass Model
 - **Architecture:** EfficientNetV2-B0 + Custom Classification Head
-- **Accuracy:** 71.02% (optimized_cookware_acc_0.2898.keras)
+- **Accuracy:** 72.5% (wear_multiclass_model.h5)
 - **Input:** 224x224 RGB images
 - **Classes:** Good, Damaged, Severely Damaged
-- **Size:** ~21MB (optimized for deployment)
+- **Size:** ~170MB (high-performance model)
 
 ### Training Details
 - **Base Model:** EfficientNetV2-B0 (pre-trained on ImageNet)
@@ -207,8 +207,8 @@ Check service status and model availability.
 
 ```bash
 # Model settings
-MODEL_PATH=/models/optimized_cookware_acc_0.2898.keras
-NETLIFY_MODEL_PATH=/opt/build/repo/models/optimized_cookware_acc_0.2898.keras
+MODEL_PATH=/models/wear_multiclass_model.h5
+NETLIFY_MODEL_PATH=/opt/build/repo/models/wear_multiclass_model.h5
 
 # Environment
 ENVIRONMENT=production

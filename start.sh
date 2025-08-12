@@ -15,11 +15,11 @@ if [ ! -d "models" ]; then
     echo "Warning: models directory not found"
 fi
 
-# Check if optimized model exists
-if [ -f "models/optimized_cookware_acc_0.2898.keras" ]; then
-    echo "✓ Optimized model found"
+# Check if wear multiclass model exists
+if [ -f "models/wear_multiclass_model.h5" ]; then
+    echo "✓ Wear multiclass model found"
 else
-    echo "⚠ Optimized model not found, will try fallback models"
+    echo "⚠ Wear multiclass model not found, will try fallback models"
 fi
 
 # Start the application with gunicorn for better production performance

@@ -123,15 +123,15 @@
     </div>
 
     <script>
-        let selectedModel = 'optimized';
+        let selectedModel = 'wear-multiclass';
         
         // Mock model data
         const modelData = {
-            optimized: {
-                name: 'Optimized Model',
-                accuracy: '71.02%',
-                filename: 'optimized_cookware_acc_0.2898.keras',
-                description: '⚡ Fastest & Most Accurate'
+            'wear-multiclass': {
+                name: 'Wear Multiclass Model',
+                accuracy: '72.5%',
+                filename: 'wear_multiclass_model.h5',
+                description: '🏆 Highest Accuracy & Most Advanced'
             },
             original: {
                 name: 'Original Model', 
@@ -197,7 +197,7 @@
             const pseudoRandom = (testImageSeed * 9301 + 49297) % 233280 / 233280;
             let selectedCondition;
             
-            if (model === 'optimized') {
+            if (model === 'wear-multiclass') {
                 // Optimized model - Better at detecting good condition
                 if (pseudoRandom < 0.4) {
                     selectedCondition = conditions[0]; // New

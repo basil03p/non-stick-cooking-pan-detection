@@ -82,7 +82,7 @@ class DeploymentValidator:
         self.validate_file_exists("requirements.txt", "Koyeb")
         
         # Check model file
-        self.validate_file_exists("models/optimized_cookware_acc_0.2898.keras", "Koyeb")
+        self.validate_file_exists("models/wear_multiclass_model.h5", "Koyeb")
         
         print("✅ Koyeb configuration validated")
     
@@ -127,7 +127,7 @@ class DeploymentValidator:
         print("\n📁 Validating Common Files...")
         
         # Check model exists
-        if not self.validate_file_exists("models/optimized_cookware_acc_0.2898.keras"):
+        if not self.validate_file_exists("models/wear_multiclass_model.h5"):
             self.errors.append("❌ Critical: ML model file missing!")
             
         # Check frontend files

@@ -116,7 +116,6 @@ def analyze_with_model(image_data, selected_model='wear_multiclass_model.h5'):
         # Fallback to any available model if selected model not found
         fallback_models = [
             'wear_multiclass_model.h5',
-            'optimized_cookware_acc_0.2898.keras',
             'original_cookware_classifier_acc_0.4489.keras',
             'proven_cookware_classifier_acc_0.4034.keras'
         ]

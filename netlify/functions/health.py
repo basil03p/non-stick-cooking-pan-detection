@@ -40,14 +40,14 @@ def handler(event, context):
     
     try:
         # Check model availability
-        model_path = os.environ.get('MODEL_PATH', '/opt/build/repo/models/optimized_cookware_acc_0.2898.keras')
+        model_path = os.environ.get('MODEL_PATH', '/opt/build/repo/models/wear_multiclass_model.h5')
         
         # Alternative paths for Netlify
         possible_paths = [
             model_path,
-            os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'optimized_cookware_acc_0.2898.keras'),
-            '/opt/build/repo/models/optimized_cookware_acc_0.2898.keras',
-            './models/optimized_cookware_acc_0.2898.keras'
+            os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'wear_multiclass_model.h5'),
+            '/opt/build/repo/models/wear_multiclass_model.h5',
+            './models/wear_multiclass_model.h5'
         ]
         
         model_exists = False
@@ -82,7 +82,7 @@ def handler(event, context):
             'version': '2.0.0',
             'project': 'CNN-based Nonstick Cookware Damage Detection',
             'model_info': {
-                'primary_model': 'optimized_cookware_acc_0.2898.keras',
+                'primary_model': 'wear_multiclass_model.h5',
                 'architecture': 'EfficientNetV2-B0 + Custom Classification Head',
                 'accuracy': '71.02%',
                 'classes': ['new', 'minor', 'moderate', 'severe'],

@@ -21,7 +21,7 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
         
         # Check model availability
-        model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'optimized_cookware_acc_0.2898.keras')
+        model_path = os.path.join(os.path.dirname(__file__), '..', 'models', 'wear_multiclass_model.h5')
         model_exists = os.path.exists(model_path)
         
         # Check for fallback models
@@ -32,7 +32,7 @@ class handler(BaseHTTPRequestHandler):
         
         available_models = []
         if model_exists:
-            available_models.append('optimized_cookware_acc_0.2898.keras')
+            available_models.append('wear_multiclass_model.h5')
         
         for fallback in fallback_models:
             fallback_path = os.path.join(os.path.dirname(__file__), '..', 'models', fallback)
@@ -46,7 +46,7 @@ class handler(BaseHTTPRequestHandler):
             'version': '2.0.0',
             'project': 'CNN-based Nonstick Cookware Damage Detection',
             'model_info': {
-                'primary_model': 'optimized_cookware_acc_0.2898.keras',
+                'primary_model': 'wear_multiclass_model.h5',
                 'architecture': 'EfficientNetV2-B0 + Custom Classification Head',
                 'accuracy': '71.02%',
                 'classes': ['new', 'minor', 'moderate', 'severe'],
