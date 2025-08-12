@@ -59,7 +59,7 @@
                     <p>Choose from available trained models for analysis</p>
                     
                     <div class="model-grid" id="modelGrid">
-                        <!-- Models will be loaded dynamically -->
+                        <!-- Models will be loaded dynamically from models folder -->
                         <div class="model-loading">
                             <div class="loading-spinner"></div>
                             <p>Loading available models...</p>
@@ -70,45 +70,6 @@
                         <span class="selected-model-text">Selected Model: </span>
                         <span class="selected-model-name" id="selectedModelName">Loading...</span>
                         <span class="selected-model-badge" id="selectedModelBadge">🤖 AI Model</span>
-                    </div>
-                </div>
-            </section>
-                                <div class="model-stats">
-                                    <span class="accuracy">71.02% Accuracy</span>
-                                    <span class="badge recommended">Recommended</span>
-                                </div>
-                                <p>Fastest inference, balanced performance</p>
-                            </div>
-                        </div>
-                        
-                        <div class="model-option" data-model="original" onclick="selectModel('original')">
-                            <div class="model-icon">🔬</div>
-                            <div class="model-info">
-                                <h4>Original Model</h4>
-                                <div class="model-stats">
-                                    <span class="accuracy">55.11% Accuracy</span>
-                                    <span class="badge">Baseline</span>
-                                </div>
-                                <p>Original research model, experimental</p>
-                            </div>
-                        </div>
-                        
-                        <div class="model-option" data-model="proven" onclick="selectModel('proven')">
-                            <div class="model-icon">🏆</div>
-                            <div class="model-info">
-                                <h4>Proven Model</h4>
-                                <div class="model-stats">
-                                    <span class="accuracy">59.66% Accuracy</span>
-                                    <span class="badge">Stable</span>
-                                </div>
-                                <p>Proven in production, reliable results</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="selected-model-info">
-                        <span class="selected-label">Selected:</span>
-                        <span id="selectedModelName">Optimized Model (71.02% accuracy)</span>
                     </div>
                 </div>
             </section>

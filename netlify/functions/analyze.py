@@ -97,26 +97,57 @@ def get_condition_details(predicted_class, confidence):
     
     return conditions.get(predicted_class, conditions['moderate'])
 
-def analyze_with_model(image_data):
+def analyze_with_model(image_data, selected_model='wear_multiclass_model.h5'):
     """Analyze with actual TensorFlow model"""
     try:
-        # Try to load model
-        model_path = os.environ.get('MODEL_PATH', '/opt/build/repo/models/optimized_cookware_acc_0.2898.keras')
+        # Determine model path based on selected model
+        model_filename = selected_model
+        if not model_filename.endswith(('.keras', '.h5', '.pb')):
+            model_filename += '.h5'  # Default extension
         
-        # Alternative paths for Netlify
+        # Alternative paths for Netlify based on selected model
         possible_paths = [
-            model_path,
-            os.path.join(os.path.dirname(__file__), '..', '..', 'models', 'optimized_cookware_acc_0.2898.keras'),
-            '/opt/build/repo/models/optimized_cookware_acc_0.2898.keras',
-            './models/optimized_cookware_acc_0.2898.keras'
+            os.path.join(os.path.dirname(__file__), '..', '..', 'models', model_filename),
+            f'/opt/build/repo/models/{model_filename}',
+            f'./models/{model_filename}',
+            os.path.join(os.getcwd(), 'models', model_filename)
+        ]
+        
+        # Fallback to any available model if selected model not found
+        fallback_models = [
+            'wear_multiclass_model.h5',
+            'optimized_cookware_acc_0.2898.keras',
+            'original_cookware_classifier_acc_0.4489.keras',
+            'proven_cookware_classifier_acc_0.4034.keras'
         ]
         
         model = None
+        model_name = selected_model
+        
+        # Try to load the selected model first
         for path in possible_paths:
             if os.path.exists(path):
                 model = tf.keras.models.load_model(path)
-                print(f"Model loaded from: {path}")
+                print(f"Selected model loaded from: {path}")
                 break
+        
+        # If selected model not found, try fallback models
+        if model is None:
+            print(f"Selected model {selected_model} not found, trying fallback models...")
+            for fallback_model in fallback_models:
+                for path_template in [
+                    os.path.join(os.path.dirname(__file__), '..', '..', 'models', '{}'),
+                    '/opt/build/repo/models/{}',
+                    './models/{}'
+                ]:
+                    path = path_template.format(fallback_model)
+                    if os.path.exists(path):
+                        model = tf.keras.models.load_model(path)
+                        model_name = fallback_model
+                        print(f"Fallback model loaded from: {path}")
+                        break
+                if model:
+                    break
         
         if model is None:
             print("No model found, using fallback")
@@ -311,8 +342,12 @@ def handler(event, context):
                 'body': json.dumps({'error': 'No image data provided'})
             }
         
-        # Analyze image
-        result = analyze_with_model(body['image']) if TF_AVAILABLE else generate_mock_analysis()
+        # Get selected model from request (optional)
+        selected_model = body.get('model', 'wear_multiclass_model.h5')  # Default to best model
+        print(f"Using model: {selected_model}")
+        
+        # Analyze image with selected model
+        result = analyze_with_model(body['image'], selected_model) if TF_AVAILABLE else generate_mock_analysis(selected_model)
         
         return {
             'statusCode': 200,

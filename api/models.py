@@ -29,6 +29,59 @@ def handler(request):
                 Path('../models')
             ]
             
+            models = []
+            models_found = False
+            
+            for models_dir in possible_paths:
+                if models_dir.exists() and models_dir.is_dir():
+                    models_found = True
+                    print(f"Found models directory: {models_dir}")
+                    
+                    # Scan for model files
+                    for model_file in models_dir.glob('*.{keras,h5,pb}'):
+                        if model_file.is_file():
+                            file_size = model_file.stat().st_size
+                            model_info = parse_model_filename(model_file.name, file_size)
+                            models.append(model_info)
+                    
+                    break
+            
+            if not models_found:
+                print("No models directory found, using default models")
+                models = get_default_models()
+            
+            # Sort models by accuracy (descending)
+            models.sort(key=lambda x: x['accuracy'], reverse=True)
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'models': models,
+                    'total_count': len(models),
+                    'timestamp': datetime.now().isoformat() + 'Z',
+                    'status': 'success'
+                })
+            }
+            
+        except Exception as e:
+            print(f"Error listing models: {str(e)}")
+            return {
+                'statusCode': 500,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'body': json.dumps({
+                    'error': 'Failed to load models',
+                    'message': str(e),
+                    'status': 'error'
+                })
+            }
+            
             models_dir = None
             for path in possible_paths:
                 if path.exists():

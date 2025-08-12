@@ -36,30 +36,61 @@ async function loadAvailableModels() {
     console.log('📋 Loading available models from server...');
     
     try {
-        const response = await fetch('/api/models');
-        if (response.ok) {
-            const data = await response.json();
-            
-            if (data.status === 'success' && data.models && data.models.length > 0) {
-                availableModels = data.models;
-                console.log(`✅ Found ${availableModels.length} models:`, availableModels);
-                
-                // Initialize model selection with loaded models
-                initializeModelSelection();
-                displayModelsGrid();
-                
-                // Set default model to the highest accuracy one
-                if (availableModels.length > 0) {
-                    selectedModel = availableModels[0].id;
-                    selectModel(availableModels[0].id);
-                    console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
+        // Try different endpoints based on deployment platform
+        const endpoints = [
+            '/.netlify/functions/list-models',  // Netlify
+            '/api/models',                      // Vercel  
+            '/api/list-models'                  // Alternative
+        ];
+        
+        let response = null;
+        let modelsData = null;
+        
+        for (const endpoint of endpoints) {
+            try {
+                console.log(`🔍 Trying endpoint: ${endpoint}`);
+                response = await fetch(endpoint);
+                if (response.ok) {
+                    modelsData = await response.json();
+                    console.log(`✅ Successfully loaded models from ${endpoint}`);
+                    break;
                 }
-            } else {
-                console.warn('⚠️ No models found from API, using fallback');
-                loadFallbackModels();
+            } catch (err) {
+                console.log(`❌ Failed to load from ${endpoint}:`, err.message);
+                continue;
+            }
+        }
+        
+        if (modelsData && modelsData.models && modelsData.models.length > 0) {
+            // Convert API format to internal format
+            availableModels = modelsData.models.map(model => ({
+                id: model.filename.replace(/\.(keras|h5|pb)$/, ''),
+                filename: model.filename,
+                display_name: model.display_name,
+                accuracy: model.accuracy,
+                accuracy_display: `${model.accuracy}%`,
+                type: model.model_type,
+                description: model.description,
+                icon: model.icon,
+                badge: model.badge,
+                badge_type: model.badge_type,
+                size_mb: model.size_mb
+            }));
+            
+            console.log(`🎯 Found ${availableModels.length} models:`, availableModels);
+            
+            // Initialize model selection with loaded models
+            initializeModelSelection();
+            displayModelsGrid();
+            
+            // Set default model to the highest accuracy one
+            if (availableModels.length > 0) {
+                selectedModel = availableModels[0].id;
+                selectModel(availableModels[0].id);
+                console.log(`🤖 Default model set to: ${selectedModel} (${availableModels[0].accuracy_display})`);
             }
         } else {
-            console.warn('⚠️ Failed to load models from API, using fallback');
+            console.warn('⚠️ No models found from API, using fallback');
             loadFallbackModels();
         }
     } catch (error) {
@@ -1147,7 +1178,17 @@ function initializeTheme() {
 
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    let newTheme;
+    
+    // Cycle through: light -> dark -> black -> light
+    if (currentTheme === 'light') {
+        newTheme = 'dark';
+    } else if (currentTheme === 'dark') {
+        newTheme = 'black';
+    } else {
+        newTheme = 'light';
+    }
+    
     setTheme(newTheme);
 }
 
@@ -1156,7 +1197,18 @@ function setTheme(theme) {
     localStorage.setItem('theme', theme);
     
     const themeToggle = document.querySelector('.theme-toggle');
-    themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    if (themeToggle) {
+        if (theme === 'light') {
+            themeToggle.textContent = '🌙';
+            themeToggle.title = 'Switch to Dark Mode';
+        } else if (theme === 'dark') {
+            themeToggle.textContent = '🌚';
+            themeToggle.title = 'Switch to Black Mode';
+        } else {
+            themeToggle.textContent = '☀️';
+            themeToggle.title = 'Switch to Light Mode';
+        }
+    }
 }
 
 // Utility Functions
